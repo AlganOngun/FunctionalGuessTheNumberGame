@@ -1,0 +1,5 @@
+[requires]
+functionalplus/0.2.18-p0
+
+[generators]
+cmake
