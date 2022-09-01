@@ -1,6 +1,5 @@
 #include <fplus/fplus.hpp>
 #include <iostream>
-#include <limits>
 #include <string>
 #include <vector>
 
@@ -11,43 +10,64 @@ template<typename T> auto ask_for_value_from_cin(const std::string& message) {
   return x;
 }
 
+enum game_state { PLAYER_VICTORY, HIGHER, LOWER };
+
 auto random_number_in_range(int min, int max) {
   const auto list = fplus::numbers(min, max);
 
   return fplus::random_element(std::random_device()(), list);
 }
 
-auto guessingGame(int random_number) -> void {
-  auto guess {[random_number](int guessCount, auto&& guess) -> void {
-    const auto playerGuess {ask_for_value_from_cin<int>("Guess: ")};
+auto result_the_game(int random_number, int player_guess) -> game_state {
+  return [&]() {
+    if (random_number == player_guess) return PLAYER_VICTORY;
+    else if (random_number > player_guess) return HIGHER;
+    else return LOWER;
+  }();
+}
 
-    if (random_number == playerGuess) {
-      std::cout << "You win\n";
-      std::cout << "You Guessed the number in only " << guessCount << " guesses\n";
-      return;
-    } else if (random_number > playerGuess) std::cout << "My number is higher\n";
-    else if (random_number < playerGuess) std::cout << "My number is lower\n";
+auto guessing_game(int random_number) -> void {
+  auto guess {[random_number](int guess_count, auto&& guess) -> void {
+    const auto player_guess {ask_for_value_from_cin<int>("Guess: ")};
 
-    guess(guessCount + 1, guess);
+    const auto game_result {result_the_game(random_number, player_guess)};
+
+    switch (game_result) {
+      case PLAYER_VICTORY:
+        std::cout << "You win\n";
+        std::cout << "You Guessed the number in only " << guess_count << " guesses\n";
+        break;
+      case HIGHER:
+        std::cout << "My number is higher\n";
+        guess(guess_count + 1, guess);
+        break;
+      case LOWER:
+        std::cout << "My number is lower\n";
+        guess(guess_count + 1, guess);
+        break;
+    }
   }};
+
   guess(1, guess);
 }
 
-auto gameFunc() -> void {
+auto run_game() -> void {
   system("clear");
 
   std::cout << "Guess the number between 1 and 100\n";
 
   const auto random_number {random_number_in_range(0, 101)};
 
-  guessingGame(random_number);
+  guessing_game(random_number);
 
-  const auto play_again {ask_for_value_from_cin<std::string>("Wanna play again? y/n: ")};
+  const auto play_again {ask_for_value_from_cin<char>("Wanna play again? y/n: ")};
 
-  if (play_again == "y") gameFunc();
-  else if (play_again == "n") std::cout << "Bye\n";
+  switch (play_again) {
+    case 'y': run_game(); break;
+    case 'n': std::cout << "Bye\n"; break;
+  }
 }
 
 int main() {
-  gameFunc();
+  run_game();
 }
