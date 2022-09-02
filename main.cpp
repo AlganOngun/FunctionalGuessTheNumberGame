@@ -1,7 +1,41 @@
 #include <fplus/fplus.hpp>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
+
+auto write_to_file(const std::string&& path_to_file, const std::string& content_to_write) -> void {
+  auto file_handle {std::ofstream(path_to_file)};
+  file_handle << content_to_write;
+}
+
+auto read_file(const std::string& path_to_file) -> std::string {
+  auto file_handle {std::ifstream(path_to_file)};
+  auto content {std::string {""}};
+  file_handle >> content;
+
+  return content;
+}
+
+auto personal_record(int newRecord) -> void {
+  write_to_file("gameData.cgd", std::to_string(newRecord));
+}
+
+template<typename F, typename container>
+auto return_instead_if(F function, const container&& alternativeContainer, const container& cont)
+    -> container {
+  return ([&]() {
+    if (function(cont)) return alternativeContainer;
+    else return cont;
+  })();
+}
+
+auto personal_record() -> int {
+  const auto data = read_file("gameData.cgd");
+  const auto secureData {
+      return_instead_if([](auto cont) { return cont == ""; }, std::string {"9999999"}, data)};
+  return std::stoi(secureData);
+}
 
 template<typename T> auto ask_for_value_from_cin(const std::string& message) {
   T x;
@@ -36,6 +70,11 @@ auto guessing_game(int random_number) -> void {
       case PLAYER_VICTORY:
         std::cout << "You win\n";
         std::cout << "You Guessed the number in only " << guess_count << " guesses\n";
+
+        if (guess_count < personal_record()) {
+          personal_record(guess_count);
+          std::cout << "Congrats you have a new record of " << guess_count << " guessses\n";
+        }
         break;
       case HIGHER:
         std::cout << "My number is higher\n";
